@@ -1,7 +1,7 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: bare-ai-iGPU-engine
+    container_name: bare-ai-igpu-engine
     ipc: host
     shm_size: '16gb'
     privileged: true
@@ -16,17 +16,6 @@ services:
       - OLLAMA_VULKAN=1          # Force the bare-Everyman Engine
       - OLLAMA_GPU_OVERHEAD=0    # Don't reserve extra VRAM (critical for iGPUs)
       - OLLAMA_DEBUG=1           # Added this so we can see the Vulkan handshake in logs
-      
-      #Older notes for rocm, keeping as battle scars:
-      # This HSA override did not work, its because of Ollama not working with this instruction set
-      # which is designed for RDNA 3.5 hardware, see: https://github.com/ollama/ollama/issues/9180
-      # Use the native RDNA 3.5 / 890M instruction set , this is the 3rd test which uses the latest instructions: from https://repo.amd.com/rocm/tarball/therock-dist-linux-gfx1151-7.11.0.tar.gz
-      # HSA_OVERRIDE_GFX_VERSION=11.5.1
-      # Targets the Ryzen 9955HX as identified by host rocminfo (gfx1036) older instruction but did
-      # work, generated 2.5 tokens per second, slow but functional.
-      # - HSA_OVERRIDE_GFX_VERSION=10.3.0
-      #- ROCR_VISIBLE_DEVICES=
-      #- HIP_VISIBLE_DEVICES=
     restart: unless-stopped
 
   open-webui:
@@ -37,7 +26,7 @@ services:
     volumes:
       - open_webui_data:/app/backend/data
     environment:
-      - OLLAMA_BASE_URL=http://bare-ai-iGPU-engine:11434
+      - OLLAMA_BASE_URL=http://bare-ai-igpu-engine:11434
       - WEBUI_AUTH=True
     ports:
       # STRICT BIND 1: Local Network Only

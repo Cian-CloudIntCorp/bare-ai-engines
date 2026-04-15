@@ -16,6 +16,8 @@ services:
       - OLLAMA_VULKAN=1          # Force the bare-Everyman Engine
       - OLLAMA_GPU_OVERHEAD=0    # Don't reserve extra VRAM (critical for iGPUs)
       - OLLAMA_DEBUG=1           # Added this so we can see the Vulkan handshake in logs
+    ports:
+      - "11434:11434"
     restart: unless-stopped
 
   open-webui:

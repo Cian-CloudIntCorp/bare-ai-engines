@@ -1,0 +1,61 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: bare-ai-cpu-engine
+    deploy:
+      resources:
+        limits:
+          # RESOURCE CONFIGURATION: Adjust CPU and memory limits to match your host hardware. 
+          # For optimal performance, it is recommended to leave a margin of cores (e.g., 23 of 32 threads) 
+          # to ensure OS stability during high-load inference. Higher RAM allocation allows for 
+          # larger models and expanded KV cache (context window) performance.
+          cpus: "23"
+          memory: 44G
+    cap_add:
+      - IPC_LOCK
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ollama_data:/root/.ollama
+      - /dev/hugepages:/dev/hugepages
+    environment:
+      - OLLAMA_NUM_PARALLEL=2 
+    ports:
+      - 11434:11434
+    restart: unless-stopped
+
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:main
+    container_name: open-terminal
+    restart: unless-stopped
+    environment:
+      - API_KEY=bare-ai-cpu-engine-secret-key
+    volumes:
+      - open_terminal_data:/home/user
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: bare-ai-webui
+    depends_on:
+      - ollama
+      - open-terminal
+    volumes:
+      - open_webui_data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://bare-ai-cpu-engine:11434
+      - WEBUI_AUTH=True
+      - WEBUI_NAME=Tír-na-AI (CPU Node)
+      - OPEN_TERMINAL_URL=http://open-terminal:8080
+      - OPEN_TERMINAL_API_KEY=bare-ai-cpu-engine-secret-key
+    ports:
+      # Standardizing to the CPU node's Tailscale IP. 
+      # Ensure this matches your specific node's Tailscale address or local address if not using tailscale.
+      - "100.64.0.12:3000:8080"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  open_webui_data:
+  open_terminal_data:
